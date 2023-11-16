@@ -1,0 +1,60 @@
+#RR 11/16/23
+# this action retrieves a snapshot of Divvy station status info from https://gbfs.lyft.com/gbfs/2.3/chi/en/station_status.json
+# the intent is to run this every 15 minutes for a week
+
+name: request Divvy station status every 15 minutes
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+  repository_dispatch:
+
+permissions:
+  contents: write
+  
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - name: Check-out the repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: main
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+        # cache: "pip"
+
+    - name: Install Python venv and requirements
+      run: make venv
+
+    - name: Configure git
+      run: git config --global user.name "Automated"; git config user.email "actions@users.noreply.github.com"
+
+#added these debugging steps
+    - name: check Python packages
+      run: |
+        source venv/bin/activate
+        pip freeze
+
+    - name: Check Python version and path
+      run: |
+        source venv/bin/activate
+        python --version
+        which python
+
+# retrieve divvy station data
+    - name: request-divvy-status
+      run: |
+        source venv/bin/activate
+        python3 scripts/api-request.py
+        git add data/*
+        git diff --cached --quiet || git commit -m "add new or updated station status info to data directory"
+        git push
+
+# transform data, maybe add this later or I can do it manually
