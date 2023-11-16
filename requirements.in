@@ -1,0 +1,8 @@
+pandas
+requests
+datetime
+pytz
+flake8
+black
+isort
+mypy
