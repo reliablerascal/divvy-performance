@@ -3,8 +3,15 @@ import requests
 import datetime
 import pytz
 
+ident = (
+	"Rob Reid (reliablerascal@gmail.com), " +
+	"journalist for the public interest retrieving station status data over a short period of time"
+)
+
 url = f"https://gbfs.lyft.com/gbfs/2.3/chi/en/station_status.json?"
-response = requests.get(url)
+response = requests.get(url, headers= {
+"From": ident
+})
 data = response.json()
 response
 print("requesting data from Divvy API")
