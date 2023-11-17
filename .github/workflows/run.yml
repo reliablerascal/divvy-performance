@@ -2,10 +2,9 @@
 # this action retrieves a snapshot of Divvy station status info from https://gbfs.lyft.com/gbfs/2.3/chi/en/station_status.json
 # the intent is to run this every 15 minutes for a week
 
-name: request Divvy station status every 15 minutes
+name: request Divvy station status at predefined intervals
 
-#I had the following set to run every 15 minutes but I think I was being throttled
-#- cron: "/15 * * * *"
+#Set cron to every hour rather than 15 minutes, because I think I was being throttled
 
 on:
   schedule:
