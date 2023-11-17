@@ -6,9 +6,10 @@ name: request Divvy station status every 15 minutes
 
 #I had the following set to run every 15 minutes but I think I was being throttled
 #- cron: "/15 * * * *"
+
 on:
   schedule:
-    - cron: "*0 * * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
   repository_dispatch:
 
