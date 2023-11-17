@@ -46,6 +46,6 @@ df_station_status['n_scooters'] = df_station_status['vehicle_types_available'].a
 df_station_status = df_station_status.drop(
     columns=['vehicle_docks_available','last_reported','vehicle_types_available'],axis=1)
 
-filename = f"data/station_status_{status_timestamp}.csv"
+filename = f"../data/station_status_{status_timestamp}.csv"
 df_station_status.to_csv(filename, index=False)
 print(f"saving data as '{filename}'")
