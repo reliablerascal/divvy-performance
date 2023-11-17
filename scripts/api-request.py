@@ -28,6 +28,12 @@ status_timestamp = status_timestamp.astimezone(central_tz).strftime('%Y_%m_%d_%I
 #read into dataframe and rename columns
 df_station_status= pd.DataFrame(data['data']['stations'])
 
+# get timestamp for each station (which might be different from the dataset timestamp)
+central_tz = pytz.timezone('America/Chicago')
+df_station_status['timestamp'] = pd.to_datetime(df_station_status['last_reported'], unit='s', utc=True)
+df_station_status['timestamp'] = df_station_status['timestamp'].dt.tz_convert(central_tz)
+df_station_status['timestamp'] = df_station_status['timestamp'].dt.strftime('%m/%d/%Y %I:%M %p')
+
 # pull out JSON fields
 df_station_status['n_classic'] = df_station_status['vehicle_types_available'].apply(
     lambda x: next((item['count'] for item in x if item['vehicle_type_id'] == '1'), 0))
