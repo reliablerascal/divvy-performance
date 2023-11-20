@@ -3,9 +3,19 @@ import requests
 import datetime
 import pytz
 
+from dotenv import load_dotenv
+import os
+
+#I'm putting my identify in a separate file, so others can re-use my code without re-using my identify
+load_dotenv() #take environment variables from .env file
+API_IDENTITY_DIVVY = os.getenv("API_IDENTITY")
+API_QUEST_DIVVY = os.getenv("API_QUEST")
+
+print(API_IDENTITY_DIVVY)
+print(API_QUEST_DIVVY)
+
 ident = (
-	"Rob Reid (reliablerascal@gmail.com), " +
-	"journalist for the public interest retrieving station status data over a short period of time"
+	API_IDENTITY_DIVVY + API_QUEST_DIVVY
 )
 
 url = f"https://gbfs.lyft.com/gbfs/2.3/chi/en/station_status.json?"
