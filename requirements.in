@@ -6,4 +6,4 @@ flake8
 black
 isort
 mypy
-dotenv
+python-dotenv
