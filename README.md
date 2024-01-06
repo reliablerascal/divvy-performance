@@ -5,7 +5,11 @@ This repo analyzes performance of Divvy based on current station status data, in
 <li>one or more open docks
 </ul>
 
+# embedded Flourish map
 <div class="flourish-embed flourish-map" data-src="visualisation/15811768"><script src="https://public.flourish.studio/resources/embed.js"></script></div>
+
+# exported Flourish map
+<img src="images/Divvy Classic Bikes 2023_11_17.png">
 
 # Next Steps for Improving This Code
 
