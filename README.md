@@ -1,35 +1,35 @@
 # Divvy Bikeshare Performance
-<em>This analysis of Chicago's Divvy biksehare looks at availability of "unlimited ride" classic bikes, as well as open docks.</em>
+<em>This analysis of Chicago's Divvy bikeshare program measures the availability of "unlimited ride" classic bikes as well as availability of open docks.</em>
 
-The Divvy program promises paid annual members (@ $131/year) "unlimited 45-minute rides on classic bikes." But these classic (i.e. non-electric) bikes are not always available, and riders don't necessarily want to pay $0.17 per minute to use an electric bike.
+Divvy promises paid annual members (@ $131/year) ["unlimited 45-minute rides on classic bikes."](https://divvybikes.com/pricing) But when these classic (i.e. non-electric) bikes aren't available, riders have to pay $0.17 per minute to use an electric bike or else look for a classic bike at an adjacent station.
 
-Related, Divvy stations sometimes fill up, preventing riders from docking bikes at their intended destination.
+At the end of each ride, classic bike riders also rely on the availability of open docks at their intended destination station. When no docks are available, riders have to find an adjacent station further from their intended destination. This may also cause the rider to exceed the 45-minute ride limit, incurring $0.17/minute charges.
 
-This respository builds a foundation for analyzing Divvy's performance based on current station status data, considering the following metrics for each station:
+This repo acquires station status every hour, looking for the following problems at each timepoint:
 <ul>
-<li>one or more classic bikes available
-<li>one or more open docks
+<li>no classic bikes available
+<li>no open docks available
 </ul>
 
-Because the [City's open data portal](https://data.cityofchicago.org/Transportation/Divvy-Bicycle-Stations-Historical/eq45-8inv/about_data) has no station status data newer than 9/10/22, I've been requesting data via API and saving it in this repo.
+The initial analysis looks at hourly station status on November 17, 2023. To set the stage for longer-term analysis, I've also been requesting and saving hourly data since 11/26/24 to date (currently 1/7/24). 
 
-The initial analysis looks at hourly station status data November 17, 2023. To set the stage for longer-term analysis, I've been requesting and saving hourly data since 11/26/24 to date (currently 1/6/24). 
-
-## Preliminary Findings
-My key findings thus far are as follows:
+## Preliminary Findings for Classic Bike Availability
+My key findings thus far are as follows. Of 709 classic Divvy stations:
 <ul>
-<li>Most stations (PROVIDE A FIGURE) had one or more classic bike at all times.
-<li>A significant number of stations (PROVIDE A FIGURE)
-<li>XX stations had no available classic bikes at least 30% of the time.
-<li>XX of those stations are near downtown- in the Near North Side, Near West Side, or Loop.
+<li>534 stations (75%) of stations had one or more classic bikes at all times.
+<li>121 stations (17%) had no classic bikes at least 15% of the time.
+<li>61 stations (9%) had no classic bikes at least 30% of the time.
 </ul>
 
+To look at the geographical distribution of problematic stations, 
 I [mapped the results in Flourish](https://public.flourish.studio/visualisation/15811768/).
 
-Attempted embed- FAIL <div class="flourish-embed flourish-map" data-src="visualisation/15811768"><script src="https://public.flourish.studio/resources/embed.js"></script></div>
+<img src="images/Divvy Classic Bikes 2023_11_17.png">
 
-Exported map <img src="images/Divvy Classic Bikes 2023_11_17.png">
-
+<br>
+Stations with frequent shortages of classic bikes appear to be concentrated in the Loop, the Near West Side, and the Near North Side. 
+<br><br>
+<img src="images/Divvy Classic Bikes 2023_11_17 downtown zoom.png">
 
 ## Data Sources
 
@@ -42,34 +42,57 @@ Exported map <img src="images/Divvy Classic Bikes 2023_11_17.png">
 |[Station Status](https://gbfs.lyft.com/gbfs/2.3/chi/en/station_status.json)|# of bikes of each type available at time of API request|
 |[Chicago Community Geographic Boundaries](https://data.cityofchicago.org/Facilities-Geographic-Boundaries/Boundaries-Community-Areas-current-/cauq-8yn6)| shapefile for Chicago community areas|
 
-## Overview of Data Analysis Process
+## Overview of Data Pipeline
+<strong>Extract</strong>- a [GitHub workflow](https://github.com/reliablerascal/divvy-performance/blob/main/.github/workflows/run.yml) initiates an API request every hour using the script [api-request.py](https://github.com/reliablerascal/divvy-performance/blob/main/scripts/api-request.py)
 
-
-
-## Challenges, etc.
-GitHub throttling
-classic vs. lightweight stations. initial findings
-complicating factors- 11/30 downscaled staff
-fleet change in winter
-
-
-## Next Steps for Developing This Analysis
+<strong>Transform</strong>- [api-request.py](https://github.com/reliablerascal/divvy-performance/blob/main/scripts/api-request.py) saves most fields as-is, but also extracts the following nested fields from the JSON dictionary prior to saving data:
 <ul>
-<li>analyze data over a longer time period to assess enduring trends
-<li>review the city's contracts with Lyft and their subcontracted operator, to set the stage for comparing outcomes vs. promised metrics
+<li>timestamp = last_reported time for each station, converted to hours/minutes in Central Time
+<li>n_classic = # of classic bikes (nested within vehicle_types_available dictionary, with vehicle_type_id = 1)
+<li>n_electric = # of electric bikes (vehicle_type_id = 2)
+<li>n_scooters = # of scooters (vehicle_type_id = 3)
 </ul>
 
-minor adjustments to code
+## Overview of Data Analysis
+I used the following Jupyter Notebooks for analyzing data:
+
+[02-prepare-dataset-for-analysis.ipynb](https://github.com/reliablerascal/divvy-performance/blob/main/notebooks/02-prepare-dataset-for-analysis.ipynb)- this accomplishes the following:
 <ul>
-<li>revise timestamp in filename suffix to 24-hour format to facilitate sorting in visual interfaces
-<li>record timestamp as time_reported, and determine time_retrieved during request
-<li>adjust downstream notebooks accordingly
+<li>merges station info (community area, GPS location, station type) into station status data to create one analytic dataset
+<li>calculates key metrics: is_no_classic and is_no_docks
+<li>removes all "public racks" (i.e. non-stations)
+</ul>
+
+[03-summarize-data.ipynb](https://github.com/reliablerascal/divvy-performance/blob/main/notebooks/03-summarize-data.ipynb)
+<ul>
+<li>combines hourly data into one file
+</ul>
+
+## Challenges, etc.
+Solved
+<ul>
+<li>I originally tried to request data every 15 minutes, but GitHub seemed to be unexpectedly throttling my requests. I scaled back to requesting data every hour.
+<li>Initial analysis suggested a prevalence of docks with 0% classic bike availability on the northwest and southwest sides. Visiting some of these stations, I realized that most of these "problematic" stations were actually lightweight stations with no docks, only a post for tying up electric bikes. Information about <strong>station type</strong> is not provided in any of Divvy's data, but I was able to get this info via a FOIA request.
+</ul>
+
+Because the [City's open data portal](https://data.cityofchicago.org/Transportation/Divvy-Bicycle-Stations-Historical/eq45-8inv/about_data) has no station status data newer than 9/10/22, I've been requesting data via API and saving it in this repo.
+
+## Possible Next Steps for Developing This Analysis
+<ul>
+<li><strong>Review the city's contracts with Lyft</strong> and their subcontracted operator, to set the stage for comparing outcomes vs. promised contractual metrics. <a href="https://comptroller.nyc.gov/newsroom/comptrollers-review-of-citi-bike-finds-worrying-decreases-in-service-reliability-under-lyfts-operation-especially-in-low-income-neighborhoods">New York City's comptroller report (November 2023)</a> seems to provide an excellent template for bikeshare accountability.
+<li><strong>Analyze data over a longer time period</strong> to assess enduring trends. While it should be quick and easy to merge additional datasets, analysis would be complicated by the facts that Divvy scales back its fleet and eliminates seasonal staff over the winter (from December 1).
+<li><strong>Incorporate metrics on total bike availability</strong> to show how often riders have no options (i.e. no electric bikes AND no classic bikes) vs. no affordable options.
+<li><strong>Summarize bike availability by community area</s
+trong>.
+<li><strong>Data pipeline improvements</strong>
+    <ul><li>Automate data transformations and calculations</strong> to facilitate long-term analysis. This should only be done once the process and accountability metrics are firmly established.<li><strong>Minor adjustments to timestamp tracking</strong>- 1) revise timestamp in filename suffix to 24-hour format (i.e. 13:00 vs. 1 PM) to facilitate sorting in visual interfaces, 2) record timestamp as time_reported, and determine time_retrieved during request
+ </ul>
  </ul>
 
  ## Guide to the Repository
  
- Most data for this project is collected directly in Python via API.
+This repository is organized into the following folders:
 * [data](data/)- static station info (GPS, station type), as well as hourly station status requested by API
-* [notebooks](notebooks)- Python code for data exploration and development of data acquisition & transformation scripts
+* [notebooks](notebooks)- Python code for data exploration, development of data acquisition script, and data transformation
 * [results](results/)- Data analysis summaries
 * [scripts](scripts/)- includes api-request.py, the script run each hour to extract data from Divvy's API and transform it for analysis
